@@ -113,6 +113,15 @@ function MiamiVice() {
           output.push(queryFormatted);
         }
 
+        // GraphQL Request
+        if (obj.query && obj.operationName && obj.variables) {
+          output.push("\n" + obj.query);
+          const parsedTheme = highlightTheme.parse(JSON.stringify(sqlSyntaxTheme));
+          const vars = highlight(JSON.stringify(obj.variables));
+          output.push("\nVariables: " + vars);
+          obj = {};
+        }
+
         /*const pid = */extract(obj, 'pid');
         /*const hostname = */extract(obj, 'hostname');
         /*const v = */extract(obj, 'v');
