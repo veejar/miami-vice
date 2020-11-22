@@ -5,6 +5,10 @@ const prettyMs = require('pretty-ms');
 const padLeft = require('pad-left');
 const chalk = require('chalk');
 const yaml = require('js-yaml');
+const sqlFormatter = require('sql-formatter');
+const highlight = require('cli-highlight').highlight;
+const highlightTheme = require('cli-highlight/dist/theme');
+const sqlSyntaxTheme = require('./sql-syntax-theme');
 
 const nl = process.platform === 'win32' ? '\r\n' : '\n';
 
@@ -99,6 +103,16 @@ function MiamiVice() {
         const msg = extract(obj, 'message', 'msg') || '_';
         output.push(formatMessage(msg, level));
 
+        // TypeORM query
+        const component = extract(obj, 'component');
+        if (component && component.toLowerCase() == 'typeorm') {
+          let query = extract(obj, 'query') || '_';
+          query = "\n" + sqlFormatter.format(query);
+          const parsedTheme = highlightTheme.parse(JSON.stringify(sqlSyntaxTheme));
+          const queryFormatted = highlight(query, { language: 'sql', ignoreIllegals: true, theme: parsedTheme });
+          output.push(queryFormatted);
+        }
+
         /*const pid = */extract(obj, 'pid');
         /*const hostname = */extract(obj, 'hostname');
         /*const v = */extract(obj, 'v');
@@ -129,7 +143,7 @@ function MiamiVice() {
         if (level !== 'info') {
             const details = yaml.safeDump(obj, {skipInvalid: true, flowLevel: 0}).trimEnd();
             if (details.length < 160) {
-                output.push(chalk.gray(details));
+                if (details !== '{}') output.push(chalk.gray(details));
             }
             else {
                 detailLines = yaml.safeDump(obj, {skipInvalid: true})
